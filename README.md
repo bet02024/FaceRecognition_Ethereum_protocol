@@ -1,4 +1,4 @@
-# BioHahs
+# BioHahs, Blockchain Biometric Validation using Hash onchain to perform a Biometric Face Recognition
 IPFS &amp; ML For Face Recognition
 
 Requirements
