@@ -1,6 +1,4 @@
 
-
-
 # BIOHASH
 
 
@@ -34,11 +32,14 @@ matplotlib
 
 # Requirements for IPFS
 
-IPFS Server running on the local Enviroment
+You must need a IPFS Server running on the local Enviroment
 
-Host **127.0.0.1**
+### How to install IPFS?
+    https://docs.ipfs.io/introduction/install/
 
-Port **5001**
+Host **127.0.0.1**  (Your Host IP)
+
+Port **5001**       (Your Port)
 
 # Requirements for SmartContract Example
 
