@@ -1,9 +1,16 @@
 
 
 
-BioHahs, Blockchain Biometric Validation using Hash onchain to perform a Biometric Face Recognition
+# BIOHASH
 
-IPFS & ML For Face Recognition
+
+    Blockchain Biometric match platform
+    Generate a BioHash and store on-chain to perform a Face Recognition, using
+    Smart Contracts & Machine Learning Models.
+
+
+
+Solidity, Web3, IPFS & TensorFlow & Keras for Face Recognition protocol.
 
 # Requirements for ML Models
 
