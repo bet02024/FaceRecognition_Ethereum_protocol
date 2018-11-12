@@ -1,7 +1,6 @@
 import numpy as np
-from resnetBioHashModel import BioHashFace
+from resnetBioHashModel import BioHashFaceResnetClassifier, preprocess_input
 from keras.preprocessing import image
-from keras_vggface import utils
 import keras
 import unittest
 from keras.models import Model
@@ -169,53 +168,65 @@ def train_model():
         plt.show()
 
 
+def loadSavedModel():
 
+    model = BioHashFaceResnetClassifier(hidden_dim, nb_class)
+
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=optimizers.RMSprop(lr=1e-4),
+                  metrics=['acc'])
+
+    model.load_weights('latest_v1.h5')
+    print(model.summary())
+
+    return model
 
 def compare_biohash(biohash1, biohash2):
 
     if not biohash1 and not biohash2:
-        print("Error, you must provice biohash 1 & 2")
+        print("Error, you must provide a valid biohash1 & biohash2")
         return -1
 
-
+    model = loadSavedModel()
+    if not model:
+        print("Error, loading the model")
+        return -1
 
     biometric1 = retriveIPFSHashContent(biohash1)
-
     biometric2 = retriveIPFSHashContent(biohash2)
 
+    if not biometric1 and not biometric2:
+        print("Error, Invalid IPFS HASH")
+        return -1
 
-    model = BioHashFace(include_top=False, input_shape=(224, 224, 3))
-    last_layer = model.get_layer('avg_pool').output
-    fully = Flatten(name='flatten')(last_layer)
-    fully = Dense(hidden_dim, activation='relu', name='fc6')(fully)
-    fully = Dense(hidden_dim, activation='relu', name='fc7')(fully)
-    out = Dense(nb_class, activation='softmax', name='fc8')(fully)
-    new_bio_model = Model(model.input, out)
-
-    new_bio_model.compile(loss='categorical_crossentropy',
-                  optimizer=optimizers.RMSprop(lr=1e-4),
-                  metrics=['acc'])
-
-    new_bio_model.load_weights('latest_v1.h5')
+    with open('image/' + biohash1, 'w') as file:
+        file.write(biometric1)
+    with open('image/' + biohash2, 'w') as file:
+        file.write(biometric2)
 
 
-    print(new_bio_model.summary())
+    img1 = image.load_img('image/' + biohash1, target_size=(224, 224))
+    img2 = image.load_img('image/' + biohash2, target_size=(224, 224))
 
 
-    img = image.load_img('image/beto1.jpg', target_size=(224, 224))
-    img2 = image.load_img('image/beto2.jpg', target_size=(224, 224))
-
-    x = image.img_to_array(img)
+    x = image.img_to_array(img1)
     x = np.expand_dims(x, axis=0)
-    x = utils.preprocess_input(x, version=2)
+    x = preprocess_input(x, version=2)
     x2 = image.img_to_array(img2)
     x2 = np.expand_dims(x2, axis=0)
-    x2 = utils.preprocess_input(x2, version=2)
+    x2 = preprocess_input(x2, version=2)
 
-    preds = new_bio_model.predict(x)
-    preds2 = new_bio_model.predict(x2)
+    prediction1 = model.predict(x)
+    prediction2 = model.predict(x2)
+    print(np.argmax(prediction1, axis=1)[0],np.argmax(prediction2, axis=1)[0] )
 
-    print(np.argmax(preds, axis=1)[0])
+    if np.argmax(prediction1, axis=1)[0] == np.argmax(prediction2, axis=1)[0]:
+        print("Succesful Match ")
+        return 0
+    else:
+        print("Did not Match ")
+        return 1
+
 
 
 connect2IPFS()
