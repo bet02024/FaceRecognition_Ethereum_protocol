@@ -12,24 +12,72 @@ from keras.layers import *
 import matplotlib.pyplot as plt
 from keras.preprocessing.image import ImageDataGenerator
 import ipfsapi
+import sys
 
 keras.backend.set_image_dim_ordering('tf')
 
 hidden_dim=4096
 nb_class=2
+plot_training=False
+IPFS_Host = "127.0.0.1"
+IPFS_Port = 5001
 
-apiIPFS = ipfsapi.connect('127.0.0.1', 5001)  #LOCAL IPFS SERVER, PREVOUSLY INSTALLED
+apiIPFS=None
 
+
+def connect2IPFS():
+
+    if not ipfsapi:
+        print("Error######: IPFS Client is Not instaled ")
+        exit(-1)
+
+    try:
+        apiIPFS = ipfsapi.connect(IPFS_Host, IPFS_Port)  #LOCAL IPFS SERVER, PREVOUSLY INSTALLED
+
+        print("Successful connected to IPFS nectwork")
+        print(apiIPFS)
+
+    except Exception as e:
+        print("Unexpected Error, on IPFS::")
+        print(e)
+        exit(-1)
 
 
 def createIPFSHash(ImageDir="images/train/beto"):  #CREATE A cryptographic HASHID FROM IPFS SERVER
 
-    dictionaryIPFS = apiIPFS.add(ImageDir, recursive=True)
+    if not apiIPFS:
+        print("Error: not connected to IPFS Server")
+        return None
 
-    return dictionaryIPFS["Hash"]
+    try:
+        dictionaryIPFS = apiIPFS.add(ImageDir, recursive=True)
+        print(dictionaryIPFS)
+        if dictionaryIPFS["Hash"]:
+            return dictionaryIPFS["Hash"]
+        else:
+            return None
+
+    except Exception as e:
+        print("Unexpected Error::")
+        print(e)
+        return None
 
 
+def retriveIPFSHashContent(hashid=None):
 
+    if not apiIPFS:
+        print("Error: not connected to IPFS Server")
+        return None
+
+    try:
+        content = apiIPFS.cat(hashid)
+        print(content)
+        return content
+
+    except Exception as e:
+        print("Unexpected Error::")
+        print(e)
+        return None
 
 
 def train_model():
@@ -98,29 +146,43 @@ def train_model():
 
     new_bio_model.save('latest_v1.h5')
 
-    acc = history.history['acc']
-    val_acc = history.history['val_acc']
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
+    if plot_training:
+        acc = history.history['acc']
+        val_acc = history.history['val_acc']
+        loss = history.history['loss']
+        val_loss = history.history['val_loss']
 
-    epochs = range(len(acc))
+        epochs = range(len(acc))
 
-    plt.plot(epochs, acc, 'b', label='Training acc')
-    plt.plot(epochs, val_acc, 'r', label='Validation acc')
-    plt.title('Training and validation accuracy')
-    plt.legend()
+        plt.plot(epochs, acc, 'b', label='Training acc')
+        plt.plot(epochs, val_acc, 'r', label='Validation acc')
+        plt.title('Training and validation accuracy')
+        plt.legend()
 
-    plt.figure()
+        plt.figure()
 
-    plt.plot(epochs, loss, 'b', label='Training loss')
-    plt.plot(epochs, val_loss, 'r', label='Validation loss')
-    plt.title('Training and validation loss')
-    plt.legend()
+        plt.plot(epochs, loss, 'b', label='Training loss')
+        plt.plot(epochs, val_loss, 'r', label='Validation loss')
+        plt.title('Training and validation loss')
+        plt.legend()
 
-    plt.show()
+        plt.show()
 
 
-def predict_model():
+
+
+def compare_biohash(biohash1, biohash2):
+
+    if not biohash1 and not biohash2:
+        print("Error, you must provice biohash 1 & 2")
+        return -1
+
+
+
+    biometric1 = retriveIPFSHashContent(biohash1)
+
+    biometric2 = retriveIPFSHashContent(biohash2)
+
 
     model = BioHashFace(include_top=False, input_shape=(224, 224, 3))
     last_layer = model.get_layer('avg_pool').output
@@ -156,3 +218,7 @@ def predict_model():
     print(np.argmax(preds, axis=1)[0])
 
 
+connect2IPFS()
+
+if __name__ == '__main__':
+    globals()[sys.argv[1]]()
