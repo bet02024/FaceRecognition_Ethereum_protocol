@@ -86,11 +86,8 @@ def train_model():
     #    layer.trainable = False
 
     last_layer = model.get_layer('avg_pool').output
-
-    fully = Flatten(name='flatten')(last_layer)
-    fully = Dense(hidden_dim, activation='relu', name='fc6')(fully)
-    fully = Dense(hidden_dim, activation='relu', name='fc7')(fully)
-    out = Dense(nb_class, activation='softmax', name='fc8')(fully)
+    x = Flatten(name='flatten')(last_layer)
+    out = Dense(nb_class, activation='softmax', name='classifier')(x)
     new_bio_model = Model(model.input, out)
 
     new_bio_model.compile(loss='categorical_crossentropy',
