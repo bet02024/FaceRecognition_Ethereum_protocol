@@ -1,5 +1,5 @@
 import numpy as np
-from resnetBioHashModel import BioHashFaceResnetClassifier, preprocess_input
+from resnetBioHashModel import BioHashFaceResnetClassifier, preprocess_input, BioHashFace
 from keras.preprocessing import image
 import keras
 import unittest
@@ -12,16 +12,17 @@ import matplotlib.pyplot as plt
 from keras.preprocessing.image import ImageDataGenerator
 import ipfsapi
 import sys
+import hashlib
 
 keras.backend.set_image_dim_ordering('tf')
-
 hidden_dim=4096
 nb_class=2
 plot_training=False
 IPFS_Host = "127.0.0.1"
 IPFS_Port = 5001
 
-apiIPFS=None
+apiIpfs = None
+isConnectedIPFS = False
 
 
 def connect2IPFS():
@@ -30,26 +31,33 @@ def connect2IPFS():
         print("Error######: IPFS Client is Not instaled ")
         exit(-1)
 
-    try:
-        apiIPFS = ipfsapi.connect(IPFS_Host, IPFS_Port)  #LOCAL IPFS SERVER, PREVOUSLY INSTALLED
+    global isConnectedIPFS
+    global apiIpfs
 
-        print("Successful connected to IPFS nectwork")
-        print(apiIPFS)
+    if not isConnectedIPFS:
+        try:
+            apiIpfs = ipfsapi.connect(IPFS_Host, IPFS_Port)  #LOCAL IPFS SERVER, PREVOUSLY INSTALLED
 
-    except Exception as e:
-        print("Unexpected Error, on IPFS::")
-        print(e)
-        exit(-1)
+            print("Successful connected to IPFS nectwork")
+            print(apiIpfs)
+            isConnectedIPFS = True
+        except Exception as e:
+            print("Unexpected Error, on IPFS::")
+            print(e)
+            exit(-1)
+    else:
+        print("Already connected")
 
 
-def createIPFSHash(ImageDir="images/train/beto"):  #CREATE A cryptographic HASHID FROM IPFS SERVER
+def createIPFSHash(ImagePath=""):  #CREATE A cryptographic HASHID FROM IPFS SERVER
+    connect2IPFS()
 
-    if not apiIPFS:
+    if not apiIpfs:
         print("Error: not connected to IPFS Server")
         return None
 
     try:
-        dictionaryIPFS = apiIPFS.add(ImageDir, recursive=True)
+        dictionaryIPFS = apiIpfs.add(ImagePath)
         print(dictionaryIPFS)
         if dictionaryIPFS["Hash"]:
             return dictionaryIPFS["Hash"]
@@ -63,13 +71,14 @@ def createIPFSHash(ImageDir="images/train/beto"):  #CREATE A cryptographic HASHI
 
 
 def retriveIPFSHashContent(hashid=None):
+    connect2IPFS()
 
-    if not apiIPFS:
+    if not apiIpfs:
         print("Error: not connected to IPFS Server")
         return None
 
     try:
-        content = apiIPFS.cat(hashid)
+        content = apiIpfs.cat(hashid)
         print(content)
         return content
 
@@ -84,7 +93,6 @@ def train_model():
 
     #for layer in model.layers[:-7]:
     #    layer.trainable = False
-
     last_layer = model.get_layer('avg_pool').output
     x = Flatten(name='flatten')(last_layer)
     out = Dense(nb_class, activation='softmax', name='classifier')(x)
@@ -167,16 +175,47 @@ def train_model():
 
 def loadSavedModel():
 
-    model = BioHashFaceResnetClassifier(hidden_dim, nb_class)
+    model = BioHashFace(include_top=False, input_shape=(224, 224, 3))
+    last_layer = model.get_layer('avg_pool').output
+    x = Flatten(name='flatten')(last_layer)
+    out = Dense(nb_class, activation='softmax', name='classifier')(x)
+    new_bio_model = Model(model.input, out)
 
-    model.compile(loss='categorical_crossentropy',
+    new_bio_model.compile(loss='categorical_crossentropy',
                   optimizer=optimizers.RMSprop(lr=1e-4),
                   metrics=['acc'])
 
-    model.load_weights('latest_v1.h5')
-    print(model.summary())
+    new_bio_model.load_weights('latest_v1.h5')
+    print(new_bio_model.summary())
 
-    return model
+    return new_bio_model
+
+
+def compare_biohash_multimodal(biohash1, biohash2):
+
+    print("Coming soon...")
+
+
+def generate_biohash(picture):
+
+    if not picture:
+        print("Error, you must provide a valid picture")
+        return None
+
+    try:
+
+        idhash = hashlib.md5(picture).hexdigest()
+        print(idhash)
+        with open('image/' + idhash, 'wb') as file:
+            file.write(picture)
+
+        biohash = createIPFSHash('image/' + idhash)
+
+        return biohash
+    except Exception as e:
+        print("Unexpected Error::")
+        print(e)
+        return None
 
 def compare_biohash(biohash1, biohash2):
 
@@ -196,15 +235,13 @@ def compare_biohash(biohash1, biohash2):
         print("Error, Invalid IPFS HASH")
         return -1
 
-    with open('image/' + biohash1, 'w') as file:
+    with open('image/' + biohash1, 'wb') as file:
         file.write(biometric1)
-    with open('image/' + biohash2, 'w') as file:
+    with open('image/' + biohash2, 'wb') as file:
         file.write(biometric2)
-
 
     img1 = image.load_img('image/' + biohash1, target_size=(224, 224))
     img2 = image.load_img('image/' + biohash2, target_size=(224, 224))
-
 
     x = image.img_to_array(img1)
     x = np.expand_dims(x, axis=0)
@@ -224,9 +261,5 @@ def compare_biohash(biohash1, biohash2):
         print("Did not Match ")
         return 1
 
-
-
-connect2IPFS()
-
-if __name__ == '__main__':
-    globals()[sys.argv[1]]()
+#if __name__ == '__main__':
+#    globals()[sys.argv[1]]()
