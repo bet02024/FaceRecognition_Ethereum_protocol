@@ -1,41 +1,13 @@
 [
 	{
-		"constant": true,
-		"inputs": [],
-		"name": "biohashToCompare",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "status",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint8"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"constant": false,
 		"inputs": [
 			{
-				"name": "_caller",
-				"type": "address"
+				"name": "transactionId",
+				"type": "uint256"
 			}
 		],
-		"name": "BioHash",
+		"name": "startMinningEvent",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -46,43 +18,25 @@
 		"inputs": [
 			{
 				"name": "_biohashOriginal",
-				"type": "bytes32"
+				"type": "string"
 			},
 			{
 				"name": "_biohashToCompare",
-				"type": "bytes32"
+				"type": "string"
 			}
 		],
-		"name": "validateHash",
+		"name": "storeBioHashRequest",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
-		"constant": true,
-		"inputs": [],
-		"name": "biohashOriginal",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"constant": false,
 		"inputs": [
 			{
-				"name": "_biohashOriginal",
-				"type": "bytes32"
-			},
-			{
-				"name": "_biohashToCompare",
-				"type": "bytes32"
+				"name": "transactionId",
+				"type": "uint256"
 			},
 			{
 				"name": "isMatch",
@@ -101,49 +55,22 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "_biohashOriginal",
-				"type": "bytes32"
-			},
-			{
-				"name": "_biohashToCompare",
-				"type": "bytes32"
-			}
-		],
-		"name": "startMinningEvent",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "caller",
-		"outputs": [
-			{
-				"name": "",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
 				"indexed": false,
 				"name": "biohashOriginal",
-				"type": "bytes32"
+				"type": "string"
 			},
 			{
 				"indexed": false,
 				"name": "biohashToCompare",
-				"type": "bytes32"
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "idTransaction",
+				"type": "uint256"
 			}
 		],
 		"name": "HashMatchingRequested",
@@ -154,13 +81,8 @@
 		"inputs": [
 			{
 				"indexed": false,
-				"name": "biohashOriginal",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "biohashToCompare",
-				"type": "bytes32"
+				"name": "idTransaction",
+				"type": "uint256"
 			},
 			{
 				"indexed": false,
@@ -170,5 +92,72 @@
 		],
 		"name": "HashMatchingDone",
 		"type": "event"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "biohash_info",
+		"outputs": [
+			{
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"name": "biohashOriginal",
+				"type": "string"
+			},
+			{
+				"name": "biohashToCompare",
+				"type": "string"
+			},
+			{
+				"name": "idTransaction",
+				"type": "uint256"
+			},
+			{
+				"name": "status",
+				"type": "uint8"
+			},
+			{
+				"name": "isBiometricMatch",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getTotalNumberOfTransactions",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "transaction_count",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
 	}
 ]
