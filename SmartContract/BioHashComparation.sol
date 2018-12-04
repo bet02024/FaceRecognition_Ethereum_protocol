@@ -2,53 +2,56 @@ pragma solidity ^0.4.21;
 
 contract BioHashComparation {
 
-    // Current state of the biohash transaction.
-    address public caller;
-    bytes32 public biohashOriginal;
-    bytes32 public biohashToCompare;
     enum State { Created, Working, Done }
-    State public status;
-    bool isBiometricMatch;
 
-    // Events that will be fired on changes.
-    event HashMatchingRequested( bytes32 biohashOriginal, bytes32 biohashToCompare);
-    event HashMatchingDone(bytes32 biohashOriginal, bytes32 biohashToCompare, bool resultComparation);
-
-    function BioHash(
-        address _caller
-    ) public {
-        caller = _caller;
+    struct BioHahs{
+        address owner;
+        string biohashOriginal;
+        string biohashToCompare;
+        uint idTransaction;
+        State status;
+        bool isBiometricMatch;
     }
 
-    // REQUEST A BIOMETRIC VALIDATION
-    function validateHash(bytes32 _biohashOriginal, bytes32 _biohashToCompare) public  {
+    uint public transaction_count;
 
-        caller = msg.sender;
-        biohashOriginal = _biohashOriginal;
-        biohashToCompare = _biohashToCompare;
-        status = State.Created;
+    mapping(uint=>BioHahs) public biohash_info;
+
+    event HashMatchingRequested(string biohashOriginal, string biohashToCompare, uint idTransaction);
+    event HashMatchingDone(uint idTransaction, bool resultComparation);
+
+    function getTotalNumberOfTransactions() public view returns (uint){
+      return transaction_count;
+    }
+
+    function storeBioHashRequest(string _biohashOriginal, string _biohashToCompare) public  {
+        transaction_count++;
+        biohash_info[transaction_count]=BioHahs(
+          {
+                owner: msg.sender,
+                biohashOriginal: _biohashOriginal,
+                biohashToCompare: _biohashToCompare,
+                status: State.Created,
+                idTransaction: transaction_count,
+                isBiometricMatch: false
+          }
+       );
         //The MINER RUN A VALIDATION WITH SIGNAL, PULL THE BIOHASH FROM BLOCKCHAIN
-        emit HashMatchingRequested(biohashOriginal, biohashToCompare);
+        emit HashMatchingRequested(_biohashOriginal, _biohashToCompare, transaction_count);
     }
 
-    function startMinningEvent(bytes32 _biohashOriginal, bytes32 _biohashToCompare) public  {
-        if (_biohashOriginal == biohashOriginal && _biohashToCompare == biohashToCompare) {
-
-            status = State.Working;
-        }
+    function startMinningEvent(uint transactionId) public  {
+        biohash_info[transactionId].status = State.Working;
     }
-
 
     /// THE MINER UPDATES THE RESULT, WRITE ONCHAIN THE BIO HASH RESULT
-    function updateBioHashComparationResult(bytes32 _biohashOriginal, bytes32 _biohashToCompare, bool isMatch) public returns (bool) {
+    function updateBioHashComparationResult(uint transactionId, bool isMatch) public returns (bool) {
 
-        status = State.Done;
+        biohash_info[transactionId].status = State.Done;
+        biohash_info[transactionId].isBiometricMatch = isMatch;
+        emit HashMatchingDone( transactionId, isMatch);
 
-        if (_biohashOriginal == biohashOriginal && _biohashToCompare == biohashToCompare) {
-
-            isBiometricMatch = isMatch;
-            emit HashMatchingDone( biohashOriginal, biohashToCompare, isMatch);
-        }
-        return true;
     }
+
+
 }
