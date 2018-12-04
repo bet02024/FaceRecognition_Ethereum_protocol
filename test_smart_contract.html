@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="Blockchain Licitaciones Publicas">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic"
+          rel="stylesheet" type="text/css"/>
+
+    <title>Blockchain BioHash</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous">
+    </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+            integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+            crossorigin="anonymous"></script>
+    <style>
+    .bg-primary {
+      background-color: $blue !important;
+    }
+    </style>
+</head>
+<body>
+<div class="container justify-content-center">
+    <div class="jumbotron justify-content-center">
+        <div class="app justify-content-center">
+            <h3 class="text-center">Test BioHash SmartContract</h3>
+            <br></br>
+            <div class="alert alert-success col-md-12" role="alert">
+
+                <div class="col-md-12">You need to install Metamask:</div>
+                <div class="col-md-12" id="accInfo">You don't have Metamask installed</div>
+            </div>
+            <span id="log" class="hidden"></span>
+            <br/>
+            <div class="row">
+                <div class="alert alert-primary col-md-12" role="alert">SmartContract Address:
+                        <a target="_blank" href="https://rinkeby.etherscan.io/address/0x0e93c2c17a98a965437d07d40f297165c6ff68a9#code">https://rinkeby.etherscan.io/address/0x0e93c2c17a98a965437d07d40f297165c6ff68a9</a>
+                </div>
+            </div>
+            <br/> <br/>
+
+             <nav class="navbar navbar-light bg-light justify-content-center">
+                <span class="navbar-brand mb-0 h1">Request a new BioHahs Validation</span>
+            </nav>
+            <div class="row create_document ">
+                  <div class="col-md-12">
+                      <div class="card justify-content-center">
+                              <div class="card-body justify-content-center">Input the IPFS HASH of the Biometric data</div>
+                      </div>
+                  </div>
+                <br/>
+                <div class="col-md-6">
+                    <div class="input-group mb-3">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon1">BioHash 1</span>
+                      </div>
+                      <input type="text" id="hash1" name="hash1" class="form-control" placeholder="Nombre" aria-label="BioHash" aria-describedby="basic-addon1">
+                    </div>
+                    <br>
+                </div>
+                <div class="col-md-6">
+
+                    <div class="input-group mb-3">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon2">BioHash 2</span>
+                      </div>
+                      <input type="text" id="hash2" name="hash2" class="form-control" placeholder="Nombre" aria-label="BioHash" aria-describedby="basic-addon2">
+                    </div>
+                </div>
+                <div class="col-md-4"></div>
+                <div class="col-md-4 justify-content-center">
+                    <button  type="button" class="btn btn-danger" onclick="request()">Request Validation</button>
+                    <div id="success_transaction"></div>
+                </div>
+                <div class="col-md-4"></div>
+
+            </div>
+            <br/>
+            <br/> <br/>
+
+
+        </div>
+    </div>
+</div>
+<script src="https://unpkg.com/ipfs-http-client/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+<!--script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js" integrity="sha256-nWBTbvxhJgjslRyuAKJHK+XcZPlCnmIAAMixz6EefVk=" crossorigin="anonymous"></script-->
+<script type="text/javascript">
+
+     var isMetamaskInstalled = false;
+
+     var contractAbi = [
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "transactionId",
+				"type": "uint256"
+			}
+		],
+		"name": "startMinningEvent",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_biohashOriginal",
+				"type": "string"
+			},
+			{
+				"name": "_biohashToCompare",
+				"type": "string"
+			}
+		],
+		"name": "storeBioHashRequest",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "transactionId",
+				"type": "uint256"
+			},
+			{
+				"name": "isMatch",
+				"type": "bool"
+			}
+		],
+		"name": "updateBioHashComparationResult",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "biohashOriginal",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "biohashToCompare",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "idTransaction",
+				"type": "uint256"
+			}
+		],
+		"name": "HashMatchingRequested",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "idTransaction",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"name": "resultComparation",
+				"type": "bool"
+			}
+		],
+		"name": "HashMatchingDone",
+		"type": "event"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "biohash_info",
+		"outputs": [
+			{
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"name": "biohashOriginal",
+				"type": "string"
+			},
+			{
+				"name": "biohashToCompare",
+				"type": "string"
+			},
+			{
+				"name": "idTransaction",
+				"type": "uint256"
+			},
+			{
+				"name": "status",
+				"type": "uint8"
+			},
+			{
+				"name": "isBiometricMatch",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getTotalNumberOfTransactions",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "transaction_count",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+
+
+     var contractAddress = "0x0e93C2C17A98a965437d07d40f297165c6ff68a9";
+     var contract;
+     var contractInstance;
+
+     $( document ).ready(function() {
+        console.log('APP started');
+        if (typeof web3 !== 'undefined') {
+            var version = web3.version;
+            console.log("Web3  Version: ");
+            console.log(version);
+
+            console.log("MetaMask!! detected");
+            var accounts = web3.eth.accounts;
+            console.log(accounts);
+            $("#accInfo").html("Your Address is: " + accounts[0]);
+            isMetamaskInstalled = true;
+
+            contract = web3.eth.contract(contractAbi);
+            contractInstance = contract.at(contractAddress);
+
+            var event = contractInstance.HashMatchingRequested();
+            event.watch(function(error, result){
+                 if (!error) {
+                    console.log(result);
+                    alert("Transaction ID : " + result.args.idTransaction.c[0]);
+                    document.getElementById("success_transaction").innerHTML = "TransactionID : " + result.args.idTransaction.c[0];
+                 }
+            });s
+        } else {
+            alert("Metamask is not installed.")
+        }
+     });
+
+
+     function request(){
+         console.log("request");
+         if (typeof web3 == 'undefined') {
+            console.log("log", "You need MetaMask!!");
+         }
+         var hash1 = $("#hash1").val();
+         var hash2 = $("#hash2").val();
+
+         if (hash1.length < 10 || hash2.length < 3){
+            alert("You need to put IPFS Hash 1 & 2");
+            return;
+         }
+         console.log(hash1, hash2);
+         var account = web3.eth.accounts[0];
+         if (web3.eth.accounts[0] !== account) {
+            account = web3.eth.accounts[0];
+         }
+         console.log(account);
+         contract = web3.eth.contract(contractAbi);
+         contractInstance = contract.at(contractAddress);
+
+         contractInstance.storeBioHashRequest(hash1, hash2, {from: account, gas: 470000}, function(err, result){
+            if (err) {
+                 console.log(err);
+                 console.log("could not publish request ");
+             } else {
+                 console.log(result);
+             }
+         });
+     }
+
+</script>
+</body>
+</html>
