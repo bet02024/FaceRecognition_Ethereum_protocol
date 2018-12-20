@@ -11,20 +11,23 @@ contract BioHashComparation {
         uint idTransaction;
         State status;
         bool isBiometricMatch;
+        bool isFingerprint;
     }
 
     uint public transaction_count;
 
     mapping(uint=>BioHahs) public biohash_info;
 
-    event HashMatchingRequested(string biohashOriginal, string biohashToCompare, uint idTransaction);
+    event HashMatchingRequested(string biohashOriginal, string biohashToCompare,bool isFingerprint, uint idTransaction);
     event HashMatchingDone(uint idTransaction, bool resultComparation);
+
+
 
     function getTotalNumberOfTransactions() public view returns (uint){
       return transaction_count;
     }
 
-    function storeBioHashRequest(string _biohashOriginal, string _biohashToCompare) public  {
+    function storeBioHashRequest(string _biohashOriginal, string _biohashToCompare, bool _isFingerprint) public  {
         transaction_count++;
         biohash_info[transaction_count]=BioHahs(
           {
@@ -33,11 +36,12 @@ contract BioHashComparation {
                 biohashToCompare: _biohashToCompare,
                 status: State.Created,
                 idTransaction: transaction_count,
-                isBiometricMatch: false
+                isBiometricMatch: false,
+                isFingerprint: _isFingerprint
           }
        );
         //The MINER RUN A VALIDATION WITH SIGNAL, PULL THE BIOHASH FROM BLOCKCHAIN
-        emit HashMatchingRequested(_biohashOriginal, _biohashToCompare, transaction_count);
+        emit HashMatchingRequested(_biohashOriginal, _biohashToCompare, _isFingerprint, transaction_count);
     }
 
     function startMinningEvent(uint transactionId) public  {

@@ -43,7 +43,7 @@
             <br/> <br/>
 
              <nav class="navbar navbar-light bg-light justify-content-center">
-                <span class="navbar-brand mb-0 h1">Request a new BioHahs Validation</span>
+                <span class="navbar-brand mb-0 h1">Request a new BioHash Validation</span>
             </nav>
             <div class="row create_document ">
                   <div class="col-md-12">
@@ -52,7 +52,7 @@
                       </div>
                   </div>
                 <br/>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="input-group mb-3">
                       <div class="input-group-prepend">
                         <span class="input-group-text" id="basic-addon1">BioHash 1</span>
@@ -61,14 +61,22 @@
                     </div>
                     <br>
                 </div>
-                <div class="col-md-6">
-
+                <div class="col-md-4">
                     <div class="input-group mb-3">
                       <div class="input-group-prepend">
                         <span class="input-group-text" id="basic-addon2">BioHash 2</span>
                       </div>
                       <input type="text" id="hash2" name="hash2" class="form-control" placeholder="Nombre" aria-label="BioHash" aria-describedby="basic-addon2">
                     </div>
+                </div>
+                 <div class="col-md-4">
+                    <div class="input-group mb-3">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon3">Is Fingerprint</span>
+                      </div>
+                        <input type="checkbox" id="fingerprint" name="fingerprint" class="form-control" placeholder="is fingerprint" checked="checked" aria-label="fingerprint" aria-describedby="basic-addon3">
+
+                       </div>
                 </div>
                 <div class="col-md-4"></div>
                 <div class="col-md-4 justify-content-center">
@@ -80,8 +88,6 @@
             </div>
             <br/>
             <br/> <br/>
-
-
         </div>
     </div>
 </div>
@@ -106,86 +112,6 @@
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "_biohashOriginal",
-				"type": "string"
-			},
-			{
-				"name": "_biohashToCompare",
-				"type": "string"
-			}
-		],
-		"name": "storeBioHashRequest",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "transactionId",
-				"type": "uint256"
-			},
-			{
-				"name": "isMatch",
-				"type": "bool"
-			}
-		],
-		"name": "updateBioHashComparationResult",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "biohashOriginal",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"name": "biohashToCompare",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"name": "idTransaction",
-				"type": "uint256"
-			}
-		],
-		"name": "HashMatchingRequested",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "idTransaction",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "resultComparation",
-				"type": "bool"
-			}
-		],
-		"name": "HashMatchingDone",
-		"type": "event"
 	},
 	{
 		"constant": true,
@@ -220,10 +146,36 @@
 			{
 				"name": "isBiometricMatch",
 				"type": "bool"
+			},
+			{
+				"name": "isFingerprint",
+				"type": "bool"
 			}
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "_biohashOriginal",
+				"type": "string"
+			},
+			{
+				"name": "_biohashToCompare",
+				"type": "string"
+			},
+			{
+				"name": "_isFingerprint",
+				"type": "bool"
+			}
+		],
+		"name": "storeBioHashRequest",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -241,6 +193,29 @@
 		"type": "function"
 	},
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "transactionId",
+				"type": "uint256"
+			},
+			{
+				"name": "isMatch",
+				"type": "bool"
+			}
+		],
+		"name": "updateBioHashComparationResult",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"constant": true,
 		"inputs": [],
 		"name": "transaction_count",
@@ -253,12 +228,56 @@
 		"payable": false,
 		"stateMutability": "view",
 		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "biohashOriginal",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "biohashToCompare",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"name": "isFingerprint",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"name": "idTransaction",
+				"type": "uint256"
+			}
+		],
+		"name": "HashMatchingRequested",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "idTransaction",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"name": "resultComparation",
+				"type": "bool"
+			}
+		],
+		"name": "HashMatchingDone",
+		"type": "event"
 	}
 ];
 
 
 
-     var contractAddress = "0x0e93C2C17A98a965437d07d40f297165c6ff68a9";
+     var contractAddress = "0xcda316799dc7a8d5e469d5668ef2ad07a480f4e6";
      var contract;
      var contractInstance;
 
@@ -299,6 +318,7 @@
          }
          var hash1 = $("#hash1").val();
          var hash2 = $("#hash2").val();
+         var fingerprint = $("#fingerprint")[0].checked;
 
          if (hash1.length < 10 || hash2.length < 3){
             alert("You need to put IPFS Hash 1 & 2");
@@ -313,7 +333,7 @@
          contract = web3.eth.contract(contractAbi);
          contractInstance = contract.at(contractAddress);
 
-         contractInstance.storeBioHashRequest(hash1, hash2, {from: account, gas: 470000}, function(err, result){
+         contractInstance.storeBioHashRequest(hash1, hash2, fingerprint, {from: account, gas: 470000}, function(err, result){
             if (err) {
                  console.log(err);
                  console.log("could not publish request ");

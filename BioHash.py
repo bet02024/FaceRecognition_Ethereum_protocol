@@ -172,6 +172,88 @@ def train_model():
 
         plt.show()
 
+def train_fingerprint_model():
+    model = BioHashFace(include_top=False, input_shape=(224, 224, 3))
+
+    #for layer in model.layers[:-7]:
+    #    layer.trainable = False
+    last_layer = model.get_layer('avg_pool').output
+    x = Flatten(name='flatten')(last_layer)
+    out = Dense(nb_class, activation='softmax', name='classifier')(x)
+    new_bio_model = Model(model.input, out)
+
+    new_bio_model.compile(loss='categorical_crossentropy',
+                  optimizer=optimizers.RMSprop(lr=1e-4),
+                  metrics=['acc'])
+
+    train_data_path = 'fingerprint/train'
+    validation_data_path = 'fingerprint/validation'
+
+    img_width, img_height = 224, 224
+
+    train_datagen = ImageDataGenerator(
+          rescale=1./255,
+          rotation_range=10,
+          width_shift_range=0.2,
+          height_shift_range=0.2,
+          horizontal_flip=True,
+          fill_mode='nearest')
+
+    validation_datagen = ImageDataGenerator(rescale=1./255)
+
+    train_batchsize = 16
+    val_batchsize = 16
+
+    train_generator = train_datagen.flow_from_directory(
+            train_data_path,
+            save_to_dir="fingerprint/data",
+            target_size=(img_width, img_height),
+            batch_size=train_batchsize,
+            class_mode='categorical')
+
+    validation_generator = validation_datagen.flow_from_directory(
+            validation_data_path,
+            target_size=(img_width, img_height),
+            batch_size=val_batchsize,
+            class_mode='categorical',
+            shuffle=True)
+
+    dict_class = train_generator.class_indices
+
+    print(new_bio_model.summary())
+
+    history = new_bio_model.fit_generator(
+      train_generator,
+      steps_per_epoch=train_generator.samples/train_generator.batch_size ,
+      epochs=50,
+      validation_data=validation_generator,
+      validation_steps=validation_generator.samples/validation_generator.batch_size,
+      verbose=1)
+
+    new_bio_model.save('latest_fingerprint_v1.h5')
+
+    if plot_training:
+        acc = history.history['acc']
+        val_acc = history.history['val_acc']
+        loss = history.history['loss']
+        val_loss = history.history['val_loss']
+
+        epochs = range(len(acc))
+
+        plt.plot(epochs, acc, 'b', label='Training acc')
+        plt.plot(epochs, val_acc, 'r', label='Validation acc')
+        plt.title('Training and validation accuracy')
+        plt.legend()
+
+        plt.figure()
+
+        plt.plot(epochs, loss, 'b', label='Training loss')
+        plt.plot(epochs, val_loss, 'r', label='Validation loss')
+        plt.title('Training and validation loss')
+        plt.legend()
+
+        plt.show()
+
 
 def loadSavedModel():
 
@@ -186,6 +268,23 @@ def loadSavedModel():
                   metrics=['acc'])
 
     new_bio_model.load_weights('latest_v1.h5')
+    print(new_bio_model.summary())
+
+    return new_bio_model
+
+def loadFingerprintSavedModel():
+
+    model = BioHashFace(include_top=False, input_shape=(224, 224, 3))
+    last_layer = model.get_layer('avg_pool').output
+    x = Flatten(name='flatten')(last_layer)
+    out = Dense(nb_class, activation='softmax', name='classifier')(x)
+    new_bio_model = Model(model.input, out)
+
+    new_bio_model.compile(loss='categorical_crossentropy',
+                  optimizer=optimizers.RMSprop(lr=1e-4),
+                  metrics=['acc'])
+
+    new_bio_model.load_weights('latest_fingerprint_v1.h5')
     print(new_bio_model.summary())
 
     return new_bio_model
@@ -217,13 +316,16 @@ def generate_biohash(picture):
         print(e)
         return None
 
-def compare_biohash(biohash1, biohash2):
+def compare_biohash(biohash1, biohash2, isFingerprint):
 
     if not biohash1 and not biohash2:
         print("Error, you must provide a valid biohash1 & biohash2")
         return -1
 
     model = loadSavedModel()
+    if isFingerprint:
+        model = loadFingerprintSavedModel()
+
     if not model:
         print("Error, loading the model")
         return -1
