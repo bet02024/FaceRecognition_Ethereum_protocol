@@ -24,6 +24,17 @@ IPFS_Port = 5001
 apiIpfs = None
 isConnectedIPFS = False
 
+def findCosineSimilarity(source_representation, test_representation):
+    a = np.matmul(np.transpose(source_representation), test_representation)
+    b = np.sum(np.multiply(source_representation, source_representation))
+    c = np.sum(np.multiply(test_representation, test_representation))
+    return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
+
+def findEuclideanDistance(source_representation, test_representation):
+    euclidean_distance = source_representation - test_representation
+    euclidean_distance = np.sum(np.multiply(euclidean_distance, euclidean_distance))
+    euclidean_distance = np.sqrt(euclidean_distance)
+    return euclidean_distance
 
 def connect2IPFS():
 
@@ -45,8 +56,8 @@ def connect2IPFS():
             print("Unexpected Error, on IPFS::")
             print(e)
             exit(-1)
-    else:
-        print("Already connected")
+    #else:
+        #print("Already connected")
 
 
 def createIPFSHash(ImagePath=""):  #CREATE A cryptographic HASHID FROM IPFS SERVER
@@ -79,7 +90,7 @@ def retriveIPFSHashContent(hashid=None):
 
     try:
         content = apiIpfs.cat(hashid)
-        print(content)
+        #print(content)
         return content
 
     except Exception as e:
@@ -268,9 +279,33 @@ def loadSavedModel():
                   metrics=['acc'])
 
     new_bio_model.load_weights('latest_v1.h5')
-    print(new_bio_model.summary())
+    #print(new_bio_model.summary())
 
     return new_bio_model
+
+
+def loadFaceModelFeaturesOnly():
+
+    model = BioHashFace(include_top=False, input_shape=(224, 224, 3))
+
+    new_bio_model = Model(inputs=model.layers[0].input, outputs=model.get_layer('avg_pool').output)
+    #print(new_bio_model.summary())
+
+    #last_layer = model.get_layer('avg_pool').output
+    #x = Flatten(name='flatten')(last_layer)
+    #out = Dense(nb_class, activation='softmax', name='classifier')(x)
+    #new_bio_model = Model(model.input, out)
+    #new_bio_model.compile(loss='categorical_crossentropy',
+    #              optimizer=optimizers.RMSprop(lr=1e-4),
+    #              metrics=['acc'])
+
+    #new_bio_model.load_weights('latest_v1.h5')
+    #print(new_bio_model.summary())
+    #print(model.summary())
+    #return new_bio_model
+    return new_bio_model
+
+
 
 def loadFingerprintSavedModel():
 
@@ -285,7 +320,7 @@ def loadFingerprintSavedModel():
                   metrics=['acc'])
 
     new_bio_model.load_weights('latest_fingerprint_v1.h5')
-    print(new_bio_model.summary())
+    #print(new_bio_model.summary())
 
     return new_bio_model
 
@@ -315,6 +350,64 @@ def generate_biohash(picture):
         print("Unexpected Error::")
         print(e)
         return None
+
+
+def compare_biohashEuclidianDistance(biohash1, biohash2, isFingerprint):
+
+    if not biohash1 and not biohash2:
+        print("Error, you must provide a valid biohash1 & biohash2")
+        return -1
+
+    model = loadFaceModelFeaturesOnly()
+    if isFingerprint:
+        model = loadFingerprintSavedModel()
+
+    if not model:
+        print("Error, loading the model")
+        return -1
+
+    biometric1 = retriveIPFSHashContent(biohash1)
+    biometric2 = retriveIPFSHashContent(biohash2)
+
+    if not biometric1 and not biometric2:
+        print("Error, Invalid IPFS HASH")
+        return -1
+
+    with open('image/' + biohash1, 'wb') as file:
+        file.write(biometric1)
+    with open('image/' + biohash2, 'wb') as file:
+        file.write(biometric2)
+
+    img1 = image.load_img('image/' + biohash1, target_size=(224, 224))
+    img2 = image.load_img('image/' + biohash2, target_size=(224, 224))
+
+    x = image.img_to_array(img1)
+    x = np.expand_dims(x, axis=0)
+    x = preprocess_input(x, version=2)
+    x2 = image.img_to_array(img2)
+    x2 = np.expand_dims(x2, axis=0)
+    x2 = preprocess_input(x2, version=2)
+
+    img1_representation = model.predict(x).ravel()
+    img2_representation = model.predict(x2).ravel()
+
+    print(img1_representation.shape)
+
+    epsilon = 0.41 #cosine similarity
+    #epsilon = 120  #euclidean distance
+
+    cosine_similarity = findCosineSimilarity(img1_representation.ravel(), img2_representation)
+    euclidean_distance = findEuclideanDistance(img1_representation, img2_representation)
+
+    print("cosine_similarity: ", cosine_similarity)
+    print("euclidean_distance: ", euclidean_distance)
+    if(cosine_similarity < epsilon):
+        print("Succesful Match ")
+        return 0
+    else:
+        print("Did not Match ")
+        return 1
+
 
 def compare_biohash(biohash1, biohash2, isFingerprint):
 
@@ -354,6 +447,10 @@ def compare_biohash(biohash1, biohash2, isFingerprint):
 
     prediction1 = model.predict(x)
     prediction2 = model.predict(x2)
+
+
+
+
     print(np.argmax(prediction1, axis=1)[0],np.argmax(prediction2, axis=1)[0] )
 
     if np.argmax(prediction1, axis=1)[0] == np.argmax(prediction2, axis=1)[0]:
