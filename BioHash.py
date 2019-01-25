@@ -18,6 +18,7 @@ keras.backend.set_image_dim_ordering('tf')
 hidden_dim=4096
 nb_class=2
 plot_training=False
+
 IPFS_Host = "127.0.0.1"
 IPFS_Port = 5001
 
@@ -36,7 +37,11 @@ def findEuclideanDistance(source_representation, test_representation):
     euclidean_distance = np.sqrt(euclidean_distance)
     return euclidean_distance
 
-def connect2IPFS():
+def connect2IPFS(host, port):
+
+    if host and port:
+        IPFS_Host = host
+        IPFS_Port = port
 
     if not ipfsapi:
         print("Error######: IPFS Client is Not instaled ")
@@ -61,7 +66,9 @@ def connect2IPFS():
 
 
 def createIPFSHash(ImagePath=""):  #CREATE A cryptographic HASHID FROM IPFS SERVER
-    connect2IPFS()
+    #connect2IPFS()
+    if not apiIpfs:
+        connect2IPFS(IPFS_Host, IPFS_Port )
 
     if not apiIpfs:
         print("Error: not connected to IPFS Server")
@@ -81,8 +88,26 @@ def createIPFSHash(ImagePath=""):  #CREATE A cryptographic HASHID FROM IPFS SERV
         return None
 
 
+def getIPFSHashFile(hashid=None):
+    if not apiIpfs:
+        connect2IPFS(IPFS_Host, IPFS_Port )
+
+    if not apiIpfs:
+        print("Error: not connected to IPFS Server")
+        return None
+
+    try:
+        content = apiIpfs.get(hashid)
+        return content
+
+    except Exception as e:
+        print("Unexpected Error::")
+        print(e)
+        return None
+
 def retriveIPFSHashContent(hashid=None):
-    connect2IPFS()
+    if not apiIpfs:
+        connect2IPFS(IPFS_Host, IPFS_Port )
 
     if not apiIpfs:
         print("Error: not connected to IPFS Server")
@@ -326,31 +351,50 @@ def loadFingerprintSavedModel():
 
 
 def compare_biohash_multimodal(biohash1, biohash2):
-
     print("Coming soon...")
 
 
-def generate_biohash(picture):
-
-    if not picture:
-        print("Error, you must provide a valid picture")
-        return None
-
+def save_vectors_ipfs(picture):
     try:
-
         idhash = hashlib.md5(picture).hexdigest()
-        print(idhash)
-        with open('image/' + idhash, 'wb') as file:
-            file.write(picture)
-
-        biohash = createIPFSHash('image/' + idhash)
-
+        np.save('image/' + idhash, picture)
+        biohash = createIPFSHash('image/' + idhash + ".npy")
         return biohash
     except Exception as e:
         print("Unexpected Error::")
         print(e)
         return None
 
+def generate_biohash(picture):
+
+    if not picture:
+        print("Error, you must provide a valid picture")
+        return None
+    try:
+        idhash = hashlib.md5(picture).hexdigest()
+        print(idhash)
+        with open('image/' + idhash, 'wb') as file:
+            file.write(picture)
+        biohash = createIPFSHash('image/' + idhash)
+        return biohash
+    except Exception as e:
+        print("Unexpected Error::")
+        print(e)
+        return None
+
+
+
+def compareVectorFeatures(vector1, vector2):
+    epsilon = 0.41 #cosine similarity
+    #epsilon = 120  #euclidean distance
+    cosine_similarity = findCosineSimilarity(vector1, vector2)
+    print("cosine_similarity: ", cosine_similarity)
+    if(cosine_similarity < epsilon):
+        print("Succesful Match ")
+        return 0
+    else:
+        print("Did not Match ")
+        return 1
 
 def compare_biohashEuclidianDistance(biohash1, biohash2, isFingerprint):
 
