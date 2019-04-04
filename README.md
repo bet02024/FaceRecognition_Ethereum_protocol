@@ -1,6 +1,8 @@
 
 # BIOHASH
 
+Face Re-Identification Protocol on Ethereum Blockchain
+
 
     Blockchain Biometric match platform
     Generate a BioHash and store on-chain to perform a Face Recognition, using
