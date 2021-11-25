@@ -1,5 +1,5 @@
 
-# BIOHASH
+# USE_IPFS_TO_STORE_BIOMETRIC_HASH
 
 Face Re-Identification Protocol on Ethereum Blockchain
 
